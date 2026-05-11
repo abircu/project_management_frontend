@@ -30,13 +30,29 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 
-const schema = z.object({
-  name: z.string().min(2, 'Min 2 characters'),
-  description: z.string().optional(),
-  status: z.enum(['pending', 'active', 'completed']),
-  start_date: z.string().optional(),
-  end_date: z.string().optional(),
-});
+const isoDateOrEmpty = z
+  .string()
+  .refine((s) => s === '' || /^\d{4}-\d{2}-\d{2}$/.test(s), { message: 'Invalid date' });
+
+const schema = z
+  .object({
+    name: z.string().min(2, 'Min 2 characters'),
+    description: z.string().optional(),
+    status: z.enum(['pending', 'active', 'completed']),
+    start_date: isoDateOrEmpty,
+    end_date: isoDateOrEmpty,
+  })
+  .superRefine((data, ctx) => {
+    const start = data.start_date;
+    const end = data.end_date;
+    if (start && end && end < start) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'End date must be on or after the start date',
+        path: ['end_date'],
+      });
+    }
+  });
 
 const emptyDefaults = {
   name: '',
@@ -163,7 +179,14 @@ export default function ProjectFormDialog({ open, onOpenChange, project, onSaved
                   <FormItem>
                     <FormLabel>Start date</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <Input
+                        type="date"
+                        {...field}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          void form.trigger(['start_date', 'end_date']);
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -176,7 +199,14 @@ export default function ProjectFormDialog({ open, onOpenChange, project, onSaved
                   <FormItem>
                     <FormLabel>End date</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <Input
+                        type="date"
+                        {...field}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          void form.trigger(['start_date', 'end_date']);
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
