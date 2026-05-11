@@ -1,0 +1,89 @@
+# Project management (frontend)
+
+React + Vite app for listing, creating, editing, and viewing projects via a REST API.
+
+---
+
+## Stack
+
+- React 18, React Router 6
+- Vite 5, Tailwind CSS 4
+- Axios, React Hook Form, Zod, Radix UI
+
+---
+
+## Prerequisites
+
+- Node.js 18+
+- Backend serving the API (default path prefix: `/api`)
+
+---
+
+## Setup
+
+```bash
+cd frontend
+npm install
+```
+
+Create your local env file:
+
+- **macOS / Linux:** `cp .env.example .env`
+- **Windows (CMD):** `copy .env.example .env`
+- **Windows (PowerShell):** `Copy-Item .env.example .env`
+
+Then set **`VITE_API_BASE_URL`** in `.env` to your API root **including** `/api`:
+
+```env
+VITE_API_BASE_URL=https://your-backend.example.com/api
+```
+
+Local backend example:
+
+```env
+VITE_API_BASE_URL=http://localhost:5000/api
+```
+
+If unset, the client uses **`/api`** (same-origin only).
+
+---
+
+## Scripts
+
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Dev server (port 5173) |
+| `npm run build` | Production build → `dist` |
+| `npm run preview` | Preview the production build locally |
+
+---
+
+## Routes
+
+| Path | Page |
+| --- | --- |
+| `/` | Redirects to `/projects` |
+| `/projects` | List (search, filter, pagination) |
+| `/projects/:id` | Single project |
+| `*` | 404 |
+
+---
+
+## Vercel
+
+- **Build:** `npm run build`
+- **Output:** `dist`
+- **Monorepo:** set **Root Directory** to `frontend`
+
+`vercel.json` rewrites SPA routes to `index.html`. Set **`VITE_API_BASE_URL`** in Vercel environment variables. Your backend **CORS** must allow the deployed frontend origin.
+
+---
+
+## Folders
+
+| Path | Role |
+| --- | --- |
+| `src/api` | Axios instance |
+| `src/components` | UI and dialogs |
+| `src/pages` | Route screens |
+| `src/lib` | Utilities |
