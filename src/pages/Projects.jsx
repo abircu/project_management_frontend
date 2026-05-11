@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Eye } from 'lucide-react';
 import api from '@/api/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -91,6 +91,11 @@ export default function Projects() {
   const openCreate = () => {
     setEditing(null);
     setFormOpen(true);
+  };
+
+  const openView = (project, e) => {
+    e?.stopPropagation();
+    navigate(`/projects/${project.id}`);
   };
 
   const openEdit = (project, e) => {
@@ -192,6 +197,14 @@ export default function Projects() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="inline-flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => openView(p, e)}
+                          title="View"
+                        >
+                          <Eye />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
