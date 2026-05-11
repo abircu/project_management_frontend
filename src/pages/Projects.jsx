@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Search } from 'lucide-react';
 import api from '@/api/client';
@@ -31,12 +31,17 @@ function useDebounce(value, delay = 300) {
   return debounced;
 }
 
+const PAGE_SIZE = 10;
+
 export default function Projects() {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -47,27 +52,41 @@ export default function Projects() {
   const debouncedSearch = useDebounce(search);
 
   const queryParams = useMemo(() => {
-    const p = {};
+    const p = { page, limit: PAGE_SIZE };
     if (debouncedSearch) p.search = debouncedSearch;
     if (statusFilter !== 'all') p.status = statusFilter;
     return p;
+  }, [debouncedSearch, statusFilter, page]);
+
+  useLayoutEffect(() => {
+    setPage(1);
   }, [debouncedSearch, statusFilter]);
 
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     setLoading(true);
     try {
       const { data } = await api.get('/projects', { params: queryParams });
-      setProjects(data);
+      const body = data?.data !== undefined ? data : { data: Array.isArray(data) ? data : [], total: 0, totalPages: 0, page: 1 };
+      const rows = body.data ?? [];
+      const t = Number(body.total) || 0;
+      const tp = Number(body.totalPages) || 0;
+      const currentPage = Number(body.page) || queryParams.page;
+      setProjects(rows);
+      setTotal(t);
+      setTotalPages(tp);
+      if (tp > 0 && currentPage > tp) setPage(tp);
     } catch {
       setProjects([]);
+      setTotal(0);
+      setTotalPages(0);
     } finally {
       setLoading(false);
     }
-  };
+  }, [queryParams]);
 
   useEffect(() => {
-    fetchProjects();
-  }, [debouncedSearch, statusFilter]);
+    void fetchProjects();
+  }, [fetchProjects]);
 
   const openCreate = () => {
     setEditing(null);
@@ -196,6 +215,37 @@ export default function Projects() {
                 ))}
               </tbody>
             </table>
+            {totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t px-4 py-3 text-sm text-muted-foreground">
+                <span>
+                  Showing {(page - 1) * PAGE_SIZE + 1}–
+                  {Math.min(page * PAGE_SIZE, total)} of {total}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-foreground tabular-nums px-1">
+                    {page} / {totalPages}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={page >= totalPages}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </Card>
