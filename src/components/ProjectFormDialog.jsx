@@ -130,7 +130,7 @@ export default function ProjectFormDialog({ open, onOpenChange, project, onSaved
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Website redesign" {...field} />
+                    <Input placeholder="project name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
